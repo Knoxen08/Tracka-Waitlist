@@ -332,6 +332,8 @@
 
   <section id="gdpr" class="hidden"></section>
 
+<script defer src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
 <script>
   // Samlad, uppdaterad script-fil — körs när DOM är klar
   document.addEventListener('DOMContentLoaded', () => {
@@ -481,24 +483,16 @@
     }
 
     /* ---------------------------
-       Väntelista / Supabase (matchar waitlist-form)
+       Väntelista / Supabase (UMD, iPad-säkert)
     ----------------------------*/
-    // Kör bara om formuläret finns på sidan
     const waitForm = document.getElementById('waitlistForm');
     if (waitForm) {
-      // dynamiskt import om module inte redan laddats tidigare
-      (async () => {
-        let createClient;
-        try {
-          ({ createClient } = await import('https://esm.sh/@supabase/supabase-js@2'));
-        } catch (err) {
-          console.error('Misslyckades importera Supabase:', err);
-          return;
-        }
-
+      if (!window.supabase) {
+        console.error('Supabase UMD kunde inte laddas.');
+      } else {
         const SUPABASE_URL = 'https://scxoroybsywhckeuzrxp.supabase.co';
         const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjeG9yb3lic3l3aGNrZXV6cnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE2MzgsImV4cCI6MjA3Nzc0NzYzOH0.H7rRJPRU8N_rGO_UbrJQwP3SXsSeGLWIdCdiPFHZ8xU';
-        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false } });
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false } });
 
         const emailEl = document.getElementById('waitEmail') || document.getElementById('email');
         const consentEl = document.getElementById('waitConsent') || document.getElementById('consent');
@@ -526,26 +520,25 @@
           const email = (emailEl?.value || '').trim().toLowerCase();
 
           if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-            showWaitMessage('Ange en giltig e‑postadress.');
+            showWaitMessage('Ange en giltig e-postadress.');
             return;
           }
           if (!consentEl?.checked) {
-            showWaitMessage('Du måste godkänna lagring av din e‑post.');
+            showWaitMessage('Du måste godkänna lagring av din e-post.');
             return;
           }
 
           if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; btn.textContent = 'Sparar...'; }
 
           const payload = { email, consent_at: new Date().toISOString(), user_agent: navigator.userAgent || null };
-          const ip = await getIp();
-          if (ip) payload.ip = ip;
+          const ip = await getIp(); if (ip) payload.ip = ip;
 
           try {
             const { error } = await supabase.from('waitlist_subscribers').insert(payload);
             if (error) {
               console.error(error);
               showWaitMessage('Kunde inte spara just nu. Försök igen senare.');
-              showNotification('⚠️ Kunde inte spara', 'Kunde inte lägga till e‑posten i väntelistan.', 'error');
+              showNotification('⚠️ Kunde inte spara', 'Kunde inte lägga till e-posten i väntelistan.', 'error');
             } else {
               showNotification('✅ Tack!', 'Vi skickar ett mejl vid lansering. 🎉', 'success');
               waitForm.reset();
@@ -559,31 +552,36 @@
             if (btn) { btn.disabled = false; btn.textContent = btn.dataset.orig || 'Notifiera mig'; }
           }
         });
-      })();
+      }
     }
+
+    // Enkel felindikator om något kraschar tyst (hjälper på iPad)
+    window.addEventListener('error', e => { try { alert('JS-fel: ' + e.message); } catch(_){} });
+    window.addEventListener('unhandledrejection', e => { try { alert('Promise-fel: ' + (e.reason?.message || e.reason)); } catch(_){} });
   });
 
   /* ---------------------------
      Notifikationer (kan anropas globalt)
   ----------------------------*/
-function showNotification(title, message, type = 'success') {
-  const existing = document.querySelector('.notification');
-  if (existing) existing.remove();
+  function showNotification(title, message, type = 'success') {
+    const existing = document.querySelector('.notification');
+    if (existing) existing.remove();
 
-  const notification = document.createElement('div');
-  notification.className = 'notification';
-  notification.style.background = type === 'success' ? '#052e2f' : '#2b0b0b';
-  notification.style.color = type === 'success' ? '#bbf7d0' : '#fecaca';
-  notification.textContent = type === 'success' ? '✓ ' + message : '⚠ ' + message;
-  
-  document.body.appendChild(notification);
-  requestAnimationFrame(() => notification.classList.add('show'));
+    const notification = document.createElement('div');
+    notification.className = 'notification';
+    notification.style.background = type === 'success' ? '#052e2f' : '#2b0b0b';
+    notification.style.color = type === 'success' ? '#bbf7d0' : '#fecaca';
+    notification.textContent = type === 'success' ? '✓ ' + message : '⚠ ' + message;
 
-  setTimeout(() => {
-    notification.classList.remove('show');
-    setTimeout(() => notification.remove(), 300);
-  }, 4000);
-}
+    document.body.appendChild(notification);
+    requestAnimationFrame(() => notification.classList.add('show'));
+
+    setTimeout(() => {
+      notification.classList.remove('show');
+      setTimeout(() => notification.remove(), 300);
+    }, 4000);
+  }
 </script>
+
 </body>
 </html>
