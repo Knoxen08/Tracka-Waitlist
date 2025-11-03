@@ -11,15 +11,18 @@
 <style>
   html {
     scroll-behavior: smooth;
-    height: 100%;
+    height: 100vh;
+    overflow: hidden;
   }
   
   body {
     display: flex;
     flex-direction: column;
-    min-height: 100vh;
+    height: 100vh;
+    overflow: hidden;
   }
 
+  /* Reveal animation */
   .reveal {
     opacity: 0;
     transform: translateY(16px);
@@ -31,6 +34,7 @@
     transform: none;
   }
 
+  /* Background effects */
   .blob {
     background: radial-gradient(42% 58% at 10% 10%, rgba(14,165,233,.18), transparent 60%),
                 radial-gradient(40% 50% at 90% 20%, rgba(59,130,246,.14), transparent 60%);
@@ -40,33 +44,49 @@
     box-shadow: 0 2px 8px rgba(2,6,23,.04), 0 12px 24px -12px rgba(2,6,23,.12);
   }
   
-  /* Logga styling för header */
+  /* Header logo */
   .header-logo {
     height: 32px;
     width: auto;
     object-fit: contain;
-    transform: scale(3.8) translateX(-8px); /* Desktop */
+    transform: scale(3.8) translateX(-8px);
   }
 
-  #waitlist {
-    flex: 1 1 auto;
+  header {
+    flex-shrink: 0;
+    height: 64px;
     display: flex;
     align-items: center;
-    padding-top: 3.5rem;
-    padding-bottom: 3.5rem;
   }
 
-  /* Form spacing och styling */
+  /* Main content area */
+  #waitlist {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 1rem 0;
+  }
+
+  #waitlist .mx-auto {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .mt-8 {
+    margin-top: 1rem;
+  }
+
+  /* Form styling */
   #waitlistForm .flex.gap-3.items-start {
-    gap: 1rem;
-    margin-bottom: 1.5rem;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
   }
 
   #waitConsent {
     margin-top: 0.25rem;
   }
 
-  /* Punktlista styling */
+  /* List styling */
   .space-y-3.text-sm.text-slate-700 li {
     display: flex;
     align-items: center;
@@ -74,7 +94,7 @@
     padding: 0.25rem 0;
   }
 
-  /* Notifikation styling */
+  /* Notification */
   .notification {
     position: fixed;
     top: 20px;
@@ -112,22 +132,41 @@
     100% { opacity: 0.5; }
   }
 
-  /* iPad-specifika fixes */
+  /* Footer */
+  footer {
+    flex-shrink: 0;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* iPad specific */
   @media (min-width: 768px) and (max-width: 1024px) {
     .header-logo {
-      transform: scale(3.2) translateX(2px);
-      margin-right: 16px;
+      transform: scale(3) translateX(2px);
+    }
+
+    #waitlist {
+      padding: 0.5rem 0;
+    }
+
+    #waitlist .mx-auto {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
+    }
+
+    .gap-8 {
+      gap: 1rem;
     }
 
     #waitlistForm .flex.gap-3.items-start {
-      gap: 1.25rem;
-      align-items: flex-start;
-      margin-bottom: 2rem;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
     }
 
     #waitConsent {
       transform: scale(1.2);
-      margin-top: 0.25rem;
     }
 
     .space-y-3.text-sm.text-slate-700 li {
@@ -136,42 +175,30 @@
     }
 
     #waitSubmit {
-      margin-top: 1rem;
-      width: 100%;
-      max-width: none;
+      margin-top: 0.75rem;
     }
   }
 
-  /* Mobil-anpassning */
+  /* Mobile */
   @media (max-width: 768px) {
     .header-logo {
       transform: scale(3.2) translateX(8px);
     }
 
     #waitlist {
-      padding-top: 2.5rem;
-      padding-bottom: 2.5rem;
+      padding: 0.5rem 0;
+    }
+
+    #waitlist .mx-auto {
+      padding-top: 1rem;
+      padding-bottom: 1rem;
     }
   }
 
-  /* Extra små skärmar */
+  /* Small screens */
   @media (max-width: 480px) {
     .header-logo {
-      transform: scale(3.2) translateX(8px);
-    }
-  }
-
-  /* iPad mini specific */
-  @media (min-width: 768px) and (max-width: 834px) {
-    .header-logo {
-      transform: scale(2.8) translateX(4px);
-    }
-  }
-
-  /* iPad Pro 11" specific */
-  @media (min-width: 834px) and (max-width: 1024px) {
-    .header-logo {
-      transform: scale(3) translateX(2px);
+      transform: scale(2.8) translateX(8px);
     }
   }
 </style>
@@ -187,7 +214,7 @@
       </div>
 
       <!-- Uppdaterad badge: cyan, semitransparent bakgrund -->
-      <div class="rounded-full bg-cyan-400/12 px-3 py-1 text-xs font-medium inline-flex items-center gap-2 text-white/90">
+      <div class="rounded-full bg-cyan-400/12 px-7 py-1 text-xs font-medium inline-flex items-center gap-2 text-white/90">
         <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
         UF • Sundsvall
       </div>
