@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tracka UF – Familjeappen för tryggare resor</title>
+  <meta name="description" content="Tracka – svensk familjeapp för tryggare resor. Live-position, valfria hastighetsgränser, geofencing, hemkommen-notiser, offline-loggning och SOS." />
+  <meta name="theme-color" content="#111827" />
+  <link rel="icon" href="/favicon.ico" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    html{scroll-behavior:smooth}
+    .reveal{opacity:0;transform:translateY(16px);transition:opacity .5s, transform .5s}
+    .reveal.show{opacity:1;transform:none}
+    .blob{background:radial-gradient(42% 58% at 10% 10%, rgba(14,165,233,.18), transparent 60%),
+           radial-gradient(40% 50% at 90% 20%, rgba(59,130,246,.14), transparent 60%)}
+    .card{box-shadow:0 2px 8px rgba(2,6,23,.04), 0 12px 24px -12px rgba(2,6,23,.12)}
+    
+    /* Logga styling för header */
+    .header-logo {
+      height: 32px;
+      width: auto;
+      object-fit: contain;
+      transform: scale(3.8) translateX(-8px); /* Desktop */
+    }
+    
+    /* Mobil-anpassning */
+    @media (max-width: 768px) {
+      .header-logo {
+        transform: scale(3.2) translateX(8px); /* Mindre på mobil */
+      }
+    }
+    
+    /* Extra små skärmar */
+    @media (max-width: 480px) {
+      .header-logo {
+        transform: scale(3.2) translateX(8px); /* Ännu mindre på små mobiler */
+      }
+    }
+
+    #waitlist {
+      flex: 1 1 auto;
+      display: flex;
+      align-items: center; /* centrerar sektionens innehåll vertikalt */
+      padding-top: 1.95rem; /* justera vid behov */
+      padding-bottom: 0rem; /* justera vid behov */
+    }
+
+
+    /* Mobilmeny fix - LÄGG TILL DETTA */
+    .mobile-menu {
+      z-index: 9999 !important;
+      pointer-events: auto !important;
+    }
+
+/* Notifikation styling - kompakt version */
+.notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  max-width: 300px;
+  transform: translateX(100%);
+  transition: transform 0.3s ease-in-out;
+  background: #052e2f;
+  color: #bbf7d0;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  box-shadow: 0 10px 30px rgba(2,6,23,0.3);
+}
+
+.notification.show {
+  transform: translateX(0);
+}
+
+/* Animerad dot för success/error */
+.notification::before {
+  content: '';
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 8px;
+  background: currentColor;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 1; }
+  100% { opacity: 0.5; }
+}
+  </style>
+</head>
+<body class="min-h-screen bg-white text-slate-900">
+
+  <!-- HEADER -->
+<header class="sticky top-0 z-40 bg-[#1e293b] backdrop-blur-sm" style="border-bottom: 2px solid rgba(255,255,255,0.06);">
+  <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 text-white">
+    <a href="#" class="flex items-center gap-3" aria-label="Tracka startsida">
+      <div class="flex items-center gap-2">
+        <img src="tracka_img/tracka_uf_image2.png" alt="Tracka UF" class="header-logo">
+      </div>
+
+      <!-- Uppdaterad badge: cyan, semitransparent bakgrund -->
+      <div class="rounded-full bg-cyan-400/12 px-3 py-1 text-xs font-medium inline-flex items-center gap-2 text-white/90">
+        <span class="h-1.5 w-1.5 rounded-full bg-cyan-400"></span>
+        UF • Sundsvall
+      </div>
+    </a>
+
+    <!-- spacer för att behålla justify-between utan nav/CTA -->
+    <div aria-hidden="true" style="width:1px; opacity:0;"></div>
+  </div>
+</header>
+
+
+    <section id="waitlist" class="border-b border-slate-200 bg-slate-50">
+    <div class="mx-auto max-w-7xl px-4 py-16">
+      <div class="mb-4 inline-flex items-center gap-2 rounded-full bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+        <svg class="h-3 w-3" fill="currentColor" viewBox="0 0 12 12">
+          <circle cx="6" cy="6" r="6"/>
+        </svg>
+        Väntelista
+      </div>
+      <h2 class="reveal text-3xl font-bold">Få besked när Tracka lanseras</h2>
+      <p class="reveal mt-2 max-w-3xl text-slate-700">Skriv upp dig på väntelistan så meddelar vi dig så fort appen är redo för nedladdning.</p>
+
+      <div class="mt-8 grid gap-8 md:grid-cols-3">
+        <!-- Info kort -->
+        <div class="reveal rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-slate-100 p-6 shadow-sm md:col-span-1">
+          <div class="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
+            <svg class="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+            </svg>
+          </div>
+          <h3 class="font-semibold text-lg mb-3">Hör av dig</h3>
+          <ul class="space-y-3 text-sm text-slate-700">
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+              Ett mejl vid lansering
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+              Ingen reklam eller spam
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="h-1.5 w-1.5 rounded-full bg-blue-500"></span>
+              Enkel avanmälan
+            </li>
+          </ul>
+        </div>
+
+        <!-- Formulär -->
+        <div class="reveal card rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:col-span-2">
+          <form id="waitlistForm" class="space-y-4" novalidate>
+            <div>
+              <label for="waitEmail" class="mb-2 block text-sm font-medium">Din e-postadress</label>
+              <input 
+                id="waitEmail" 
+                type="email" 
+                autocomplete="email" 
+                placeholder="namn@exempel.se" 
+                required
+                class="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100" 
+              />
+            </div>
+
+            <div class="flex flex-col gap-4">
+              <label class="flex gap-3 items-start text-sm text-slate-600">
+                <input 
+                  id="waitConsent" 
+                  type="checkbox" 
+                  required 
+                  class="mt-0.5 h-4 w-4 rounded border-slate-300" 
+                />
+                <span>Jag godkänner att Tracka sparar min e-postadress för att skicka lanseringsinformation.</span>
+              </label>
+
+              <div class="flex flex-wrap gap-3">
+                <button 
+                  id="waitSubmit" 
+                  type="submit" 
+                  class="rounded-xl bg-slate-900 px-5 py-3 font-medium text-white hover:bg-slate-800 transition-colors"
+                >
+                  Notifiera mig vid lansering
+                </button>
+                <div id="waitMsg" role="status" aria-live="polite" class="text-sm py-3"></div>
+              </div>
+            </div>
+          </form>
+
+          <div class="mt-6 pt-4 border-t border-slate-100">
+            <p class="text-xs text-slate-500">
+              GDPR: Endast e-post sparas för detta ändamål. 
+              Frågor? <a href="mailto:contact@tracka.se" class="text-sky-500 hover:underline">contact@tracka.se</a>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+ 
+
+  <!-- FOOTER (oförändrad) -->
+  <footer class="border-t border-white/10 bg-[#1e293b] text-white">
+    <div class="mx-auto max-w-7xl grid gap-10 px-6 py-14 md:grid-cols-3">
+      <div>
+        <h3 class="text-lg font-semibold mb-3">Kontakt</h3>
+        <p class="text-sm text-white/85">Sundsvall, Sverige</p>
+        <p class="text-sm text-white/85">contact@tracka.se</p>
+        <div class="mt-4 flex gap-4">
+          <a aria-label="TikTok" href="https://www.tiktok.com/@tracka_uf" target="_blank" rel="noopener" class="hover:text-cyan-300" title="TikTok">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="22" height="22" fill="currentColor"><path d="M168.6 32v.3c0 18.6 15.1 33.7 33.7 33.7h.3v37.1c-12.3-1-24.1-4.5-34.9-10.1v52.9c0 37.6-30.5 68.1-68.1 68.1S32 183.5 32 145.9s30.5-68.1 68.1-68.1c5.6 0 11 0.7 16.2 2v38.6a33.8 33.8 0 00-16.2-4c-18.6 0-33.7 15.1-33.7 33.7 0 18.6 15.1 33.7 33.7 33.7s33.7-15.1 33.7-33.7V32h34.8z"/></svg>
+          </a>
+          <a aria-label="Instagram" href="https://www.instagram.com/tracka_uf/" target="_blank" rel="noopener" class="hover:text-cyan-300" title="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M7 2C4.243 2 2 4.243 2 7v10c0 2.757 2.243 5 5 5h10c2.757 0 5-2.243 5-5V7c0-2.757-2.243-5-5-5H7zm10 2c1.654 0 3 1.346 3 3v10c0 1.654-1.346 3-3 3H7c-1.654 0-3-1.346-3-3V7c0-1.654 1.346-3 3-3h10zm-5 3a5 5 0 100 10 5 5 0 000-10zm0 2a3 3 0 110 6 3 3 0 010-6zm5.5-.75a1.25 1.25 0 100 2.5 1.25 1.25 0 000-2.5z"/></svg>
+          </a>
+        </div>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">Snabblänkar</h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#losning" class="hover:text-cyan-300">Lösningen</a></li>
+          <li><a href="#funktioner" class="hover:text-cyan-300">Funktioner</a></li>
+          <li><a href="#kontakt" class="hover:text-cyan-300">Kontakt</a></li>
+          <li><a href="#gdpr" class="hover:text-cyan-300">GDPR</a></li>
+        </ul>
+      </div>
+      <div>
+        <h3 class="text-lg font-semibold mb-3">Om Tracka UF</h3>
+        <p class="text-sm text-white/80">UF‑företag vid Västermalm Gymnasium i Sundsvall. Vi bygger teknik för tryggare ungdomsresor – med enkelhet och integritet som grund.</p>
+      </div>
+    </div>
+    <div class="border-t border-white/10 py-4 text-center text-xs text-white/70">© <span id="year"></span> Tracka UF – Alla rättigheter förbehållna</div>
+  </footer>
+
+  <section id="gdpr" class="hidden"></section>
+
+<script>
+  // Samlad, uppdaterad script-fil — körs när DOM är klar
+  document.addEventListener('DOMContentLoaded', () => {
+    /* ---------------------------
+       Mobilmeny (tillgänglig och stabil)
+    ----------------------------*/
+    const mobileMenuBtn = document.querySelector('button[aria-label="Meny"]');
+    const header = document.querySelector('header');
+    const nav = document.querySelector('nav');
+
+    if (mobileMenuBtn && header && nav) {
+      // skapa mobilmeny om inte redan finns
+      let mobileNav = header.querySelector('.mobile-menu');
+      if (!mobileNav) {
+        mobileNav = document.createElement('div');
+        mobileNav.className = 'mobile-menu absolute top-full left-0 right-0 bg-white/95 backdrop-blur-sm border-t border-slate-200/70 shadow-lg md:hidden hidden';
+        mobileNav.innerHTML = `
+          <div class="px-4 py-4 space-y-3">
+            <a href="#vad" class="block py-2 text-slate-600 hover:text-slate-900 transition-colors">Om Tracka</a>
+            <a href="#funktioner" class="block py-2 text-slate-600 hover:text-slate-900 transition-colors">Funktioner</a>
+            <a href="#team" class="block py-2 text-slate-600 hover:text-slate-900 transition-colors">Team</a>
+            <a href="#partners" class="block py-2 text-slate-600 hover:text-slate-900 transition-colors">Partners</a>
+            <a href="#kontakt" class="block py-2 text-slate-600 hover:text-slate-900 transition-colors">Kontakt</a>
+            <div class="pt-3 border-t border-slate-200">
+              <a href="#kontakt" class="block w-full rounded-xl bg-slate-900 px-4 py-3 text-center text-sm font-medium text-white hover:bg-slate-800 transition-colors">
+                Kom igång
+              </a>
+            </div>
+          </div>
+        `;
+        header.style.position = header.style.position || 'relative';
+        header.appendChild(mobileNav);
+      }
+
+      // säker toggle
+      const setHamburgerIcon = (size = 6) => {
+        mobileMenuBtn.innerHTML = `
+          <svg class="h-${size} w-${size} pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        `;
+      };
+      const setCloseIcon = () => {
+        mobileMenuBtn.innerHTML = `
+          <svg class="h-6 w-6 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        `;
+      };
+
+      // init icon
+      setHamburgerIcon(5);
+
+      mobileMenuBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        const isHidden = mobileNav.classList.contains('hidden');
+        if (isHidden) {
+          mobileNav.classList.remove('hidden');
+          setCloseIcon();
+        } else {
+          mobileNav.classList.add('hidden');
+          setHamburgerIcon(6);
+        }
+      });
+
+      // stäng när man klickar en länk
+      mobileNav.querySelectorAll('a').forEach(link => {
+        link.addEventListener('click', () => {
+          mobileNav.classList.add('hidden');
+          setHamburgerIcon(5);
+        });
+      });
+
+      // stäng när man klickar utanför header
+      document.addEventListener('click', (ev) => {
+        if (!header.contains(ev.target)) {
+          mobileNav.classList.add('hidden');
+          setHamburgerIcon(5);
+        }
+      });
+    }
+
+    /* ---------------------------
+       Årtal (footer)
+    ----------------------------*/
+    const yearEl = document.getElementById('year');
+    if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+    /* ---------------------------
+       Reveal (intersection observer)
+    ----------------------------*/
+    try {
+      const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); });
+      }, { threshold: 0.12 });
+      document.querySelectorAll('.reveal').forEach(el => io.observe(el));
+    } catch (err) {
+      // ignore on older browsers
+    }
+
+    /* ---------------------------
+       Mjuk scroll (under header)
+    ----------------------------*/
+    (function() {
+      const headerEl = document.querySelector('header');
+      const headerH = () => headerEl ? headerEl.getBoundingClientRect().height : 64;
+      document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', (e) => {
+          const href = a.getAttribute('href');
+          if (!href || href === '#') return;
+          const t = document.querySelector(href);
+          if (!t) return;
+          e.preventDefault();
+          const top = t.getBoundingClientRect().top + window.scrollY - headerH() - 8;
+          window.scrollTo({ top, behavior: 'smooth' });
+          history.pushState(null, '', href);
+        });
+      });
+    })();
+
+    /* ---------------------------
+       Kontaktformulär (finns på sidan)
+    ----------------------------*/
+    const cform = document.getElementById('contactForm');
+    if (cform) {
+      cform.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const submitBtn = cform.querySelector('button[type="submit"]');
+        const originalText = submitBtn ? submitBtn.textContent : '';
+        if (submitBtn) { submitBtn.textContent = 'Skickar...'; submitBtn.disabled = true; }
+
+        const data = new FormData(cform);
+        try {
+          const res = await fetch(cform.action, { method: 'POST', body: data, headers: { 'Accept': 'application/json' } });
+          if (res.ok) {
+            showNotification('✅ Meddelandet skickat!', 'Vi återkommer inom 24 timmar.', 'success');
+            cform.reset();
+          } else {
+            showNotification('⚠️ Kunde inte skicka', 'Försök igen eller maila oss direkt.', 'error');
+          }
+        } catch (err) {
+          showNotification('⚠️ Nätverksfel', 'Kontrollera anslutningen och försök igen.', 'error');
+        } finally {
+          if (submitBtn) { submitBtn.textContent = originalText; submitBtn.disabled = false; }
+        }
+      });
+    }
+
+    /* ---------------------------
+       Väntelista / Supabase (matchar waitlist-form)
+    ----------------------------*/
+    // Kör bara om formuläret finns på sidan
+    const waitForm = document.getElementById('waitlistForm');
+    if (waitForm) {
+      // dynamiskt import om module inte redan laddats tidigare
+      (async () => {
+        let createClient;
+        try {
+          ({ createClient } = await import('https://esm.sh/@supabase/supabase-js@2'));
+        } catch (err) {
+          console.error('Misslyckades importera Supabase:', err);
+          return;
+        }
+
+        const SUPABASE_URL = 'https://scxoroybsywhckeuzrxp.supabase.co';
+        const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjeG9yb3lic3l3aGNrZXV6cnhwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjIxNzE2MzgsImV4cCI6MjA3Nzc0NzYzOH0.H7rRJPRU8N_rGO_UbrJQwP3SXsSeGLWIdCdiPFHZ8xU';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_ANON, { auth: { persistSession: false } });
+
+        const emailEl = document.getElementById('waitEmail') || document.getElementById('email');
+        const consentEl = document.getElementById('waitConsent') || document.getElementById('consent');
+        const msgEl = document.getElementById('waitMsg') || document.getElementById('msg');
+        const btn = document.getElementById('waitSubmit') || document.getElementById('submitBtn');
+
+        const getIp = async () => {
+          try {
+            const r = await fetch('https://api.ipify.org?format=json', { cache: 'no-store' });
+            if (!r.ok) return null;
+            const j = await r.json();
+            return j.ip || null;
+          } catch { return null; }
+        };
+
+        const showWaitMessage = (text, ok = false) => {
+          if (!msgEl) return;
+          msgEl.textContent = text;
+          msgEl.className = ok ? 'text-sm text-green-600' : 'text-sm text-red-600';
+        };
+
+        waitForm.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          showWaitMessage('');
+          const email = (emailEl?.value || '').trim().toLowerCase();
+
+          if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            showWaitMessage('Ange en giltig e‑postadress.');
+            return;
+          }
+          if (!consentEl?.checked) {
+            showWaitMessage('Du måste godkänna lagring av din e‑post.');
+            return;
+          }
+
+          if (btn) { btn.disabled = true; btn.dataset.orig = btn.textContent; btn.textContent = 'Sparar...'; }
+
+          const payload = { email, consent_at: new Date().toISOString(), user_agent: navigator.userAgent || null };
+          const ip = await getIp();
+          if (ip) payload.ip = ip;
+
+          try {
+            const { error } = await supabase.from('waitlist_subscribers').insert(payload);
+            if (error) {
+              console.error(error);
+              showWaitMessage('Kunde inte spara just nu. Försök igen senare.');
+              showNotification('⚠️ Kunde inte spara', 'Kunde inte lägga till e‑posten i väntelistan.', 'error');
+            } else {
+              showNotification('✅ Tack!', 'Vi skickar ett mejl vid lansering. 🎉', 'success');
+              waitForm.reset();
+              emailEl?.focus();
+            }
+          } catch (err) {
+            console.error(err);
+            showWaitMessage('Ett fel uppstod. Försök igen senare.');
+            showNotification('⚠️ Fel', 'Ett fel uppstod vid sparning.', 'error');
+          } finally {
+            if (btn) { btn.disabled = false; btn.textContent = btn.dataset.orig || 'Notifiera mig'; }
+          }
+        });
+      })();
+    }
+  });
+
+  /* ---------------------------
+     Notifikationer (kan anropas globalt)
+  ----------------------------*/
+function showNotification(title, message, type = 'success') {
+  const existing = document.querySelector('.notification');
+  if (existing) existing.remove();
+
+  const notification = document.createElement('div');
+  notification.className = 'notification';
+  notification.style.background = type === 'success' ? '#052e2f' : '#2b0b0b';
+  notification.style.color = type === 'success' ? '#bbf7d0' : '#fecaca';
+  notification.textContent = type === 'success' ? '✓ ' + message : '⚠ ' + message;
+  
+  document.body.appendChild(notification);
+  requestAnimationFrame(() => notification.classList.add('show'));
+
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => notification.remove(), 300);
+  }, 4000);
+}
+</script>
+</body>
+</html>
